@@ -8,7 +8,7 @@ environment:
 
 dependencies:
   audio_session: ^0.1.0
-  audioplayers: ^6.0.0
+  audioplayers: ^5.2.1
   flutter:
     sdk: flutter
   iconly: ^1.0.1
