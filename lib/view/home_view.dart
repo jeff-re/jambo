@@ -1,4 +1,5 @@
-import 'package:audioplayers/audioplayers.dart';
+//import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:text_marquee/text_marquee.dart';
@@ -25,28 +26,22 @@ class _HomeViewState extends State<HomeView> {
     _initializeAudioSession();
     _audioPlayer = AudioPlayer();
 
-    _audioPlayer.onDurationChanged.listen((Duration d) {
+    _audioPlayer.durationStream.listen((Duration? d) {
       setState(() {
-        _duration = d;
+        _duration = d ?? Duration.zero;
       });
     });
 
-    _audioPlayer.onPositionChanged.listen((Duration p) {
+    _audioPlayer.positionStream.listen((Duration p) {
       setState(() {
         _position = p;
-      });
-    });
-
-    _audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
-      setState(() {
-        _isPlaying = state == PlayerState.playing;
       });
     });
   }
 
   Future<void> _initializeAudioSession() async {
     final session = await AudioSession.instance;
-    await session.configure(const AudioSessionConfiguration.music());
+    await session.configure(const AudioSessionConfiguration.speech());
   }
 
   @override
@@ -61,17 +56,24 @@ class _HomeViewState extends State<HomeView> {
     if (_isPlaying) {
       await _audioPlayer.pause();
       session.setActive(false);
+      _timer?.cancel(); // Cancel the timer if audio is paused
+      setState(() {
+        _isPlaying = false;
+      });
     } else {
       await session.setActive(true);
-      await _audioPlayer
-          .play(UrlSource('https://stream.zeno.fm/j6f2mxfg169vv'));
+      await _audioPlayer.setUrl('https://stream.zeno.fm/j6f2mxfg169vv');
+      await _audioPlayer.play();
+      setState(() {
+        _isPlaying = true;
+      });
     }
   }
 
   void _setTimer(Duration duration) {
     _timer?.cancel(); // Cancel any existing timer
     _timer = Timer(duration, () {
-      _audioPlayer.pause();
+      _audioPlayer.stop();
       setState(() {
         _isPlaying = false;
       });
